@@ -1,0 +1,10 @@
+[client]
+showErrorDetails = false
+
+[logger]
+level = "error"
+
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = false
