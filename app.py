@@ -55,37 +55,18 @@ LOGIN_LOCKOUT_MINUTES = 15
 # ============================================================================
 
 def get_google_client():
-    """Authenticate with Google Sheets using OAuth 2.0"""
-    
-    # Try to get credentials from session
-    if "google_creds" in st.session_state and st.session_state.google_creds:
-        creds = st.session_state.google_creds
-        
-        # Refresh if needed
-        if creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-            st.session_state.google_creds = creds
-        
-        return gspread.authorize(creds)
-    
-    # Get credentials JSON from secrets
+    """Authenticate with Google Sheets using service account"""
     try:
-        creds_dict = st.secrets["google_oauth"]
-    except KeyError:
-        st.error("❌ google_oauth credentials not found in secrets.toml")
+        creds_dict = st.secrets["google_service_account"]
+        creds = Credentials.from_service_account_info(
+            creds_dict,
+            scopes=['https://www.googleapis.com/auth/spreadsheets']
+        )
+        return gspread.authorize(creds)
+    except Exception as e:
+        st.error(f"❌ Google Sheets auth failed: {str(e)[:100]}")
         st.stop()
-    
-    # Create flow
-    flow = InstalledAppFlow.from_client_config(creds_dict, SCOPES)
-    
-    # Run local server for OAuth (this opens a browser)
-    creds = flow.run_local_server(port=0)
-    
-    # Store in session
-    st.session_state.google_creds = creds
-    
-    return gspread.authorize(creds)
-
+        
 def init_sheets():
     """Initialize Google Sheets if they don't exist"""
     try:
